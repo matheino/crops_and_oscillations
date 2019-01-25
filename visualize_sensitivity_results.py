@@ -364,6 +364,7 @@ sens_files_to_visualize(alpha,model_list_main,aggregation_list,irrig_setup_list,
 
 model_list_main = ['all_models']
 irrig_setup_list = ['combined']
+oscillation_list = ['growing_season_enso','growing_season_iod','growing_season_nao']
 input_path = r'D:\work\research\crops_and_oscillations\results_v8\combined_fullharm\sensitivity_gs_figs'
 savepath = r'D:\work\research\crops_and_oscillations\results_v8\combined_fullharm\sensitivity_gs_figs'
 sens_files_to_visualize(alpha,model_list_main,aggregation_list,irrig_setup_list,crop_list,oscillation_list,climate_list,input_path,savepath,save)

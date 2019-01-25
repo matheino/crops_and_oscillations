@@ -84,7 +84,7 @@ def obtain_raster_data_difference(input_path1,input_path2,aggregation,alpha,file
     
 # Calculate the difference in absolute sensitivity between the scenarios.
 # Change the values previously changed to zero into nan.
-    sens_diff  = abs(x) - abs(y)
+    sens_diff  = np.abs(y) - np.abs(x)
     sens_diff[~keep_these_indices_pval] = np.nan
     sens_diff[remove_these_indices_nan] = np.nan
 # Change tabulated data to raster format.
@@ -111,7 +111,7 @@ def visualize_ensemble_raster(crop,osc,raster_data,raster_mask,savepath,save,col
     fig.add_axes(ax)
       
 # Create the colorscale, using RGB information and the function LinearSegmentedColormap
-    cdict = {'blue':  ((0.0, 0.0, 0.0),
+    cdict = {'red':  ((0.0, 0.0, 0.0),
                    (0.25, 0.0, 0.0),
                    (0.49, 0.8, 0.9),
                    (0.51, 0.9, 1.0),
@@ -125,7 +125,7 @@ def visualize_ensemble_raster(crop,osc,raster_data,raster_mask,savepath,save,col
                    (0.75, 0.0, 0.0),
                    (1.0, 0.0, 0.0)),
 
-         'red':  ((0.0, 0.0, 0.4),
+         'blue':  ((0.0, 0.0, 0.4),
                    (0.25, 1.0, 1.0),
                    (0.49, 1.0, 0.9),
                    (0.51, 0.9, 0.8),
@@ -220,13 +220,13 @@ difference_files_to_visualize(alpha,model_list_main,aggregation_list,'combined',
 input_path1 = r'D:\work\research\crops_and_oscillations\results_v8\firr_fullharm\sensitivity'
 input_path2 = r'D:\work\research\crops_and_oscillations\results_v8\noirr_fullharm\sensitivity'
 savepath = r'D:\work\research\crops_and_oscillations\results_v8\combined_fullharm\sens_difference'
-difference_files_to_visualize(alpha,model_list_main,aggregation_list,'firr','noirr',crop_list,oscillation_list,climate_list,input_path1,input_path2,savepath,save,'fullharm_combined_noirr')
+difference_files_to_visualize(alpha,model_list_main,aggregation_list,'firr','noirr',crop_list,oscillation_list,climate_list,input_path1,input_path2,savepath,save,'fullharm_firr_noirr')
 
 model_list_main = ['all_fertilizer_models']
 input_path1 = r'D:\work\research\crops_and_oscillations\results_v8\combined_fullharm\sensitivity'
 input_path2 = r'D:\work\research\crops_and_oscillations\results_v8\combined_harmnon\sensitivity'
 savepath = r'D:\work\research\crops_and_oscillations\results_v8\combined_fullharm\sens_difference'
-difference_files_to_visualize(alpha,model_list_main,aggregation_list,'combined_actfert','combined_fullfert',crop_list,oscillation_list,climate_list,input_path1,input_path2,savepath,save,'fullharm_combined_harmnon_cominbed')
+difference_files_to_visualize(alpha,model_list_main,aggregation_list,'combined_actfert','combined_fullfert',crop_list,oscillation_list,climate_list,input_path1,input_path2,savepath,save,'fullharm_combined_harmnon_combined')
 
 input_path1 = r'D:\work\research\crops_and_oscillations\results_v8\combined_fullharm\sensitivity'
 input_path2 = r'D:\work\research\crops_and_oscillations\results_v8\firr_harmnon\sensitivity'
