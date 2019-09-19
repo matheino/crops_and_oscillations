@@ -1,11 +1,14 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*- import pylab
 import os
+os.environ['PROJ_LIB'] = r'C:\Users\heinom2\AppData\Local\conda\conda\pkgs\proj4-4.9.3-hfa6e2cd_8\Library\share'
 import numpy as np
 import matplotlib.pyplot as plt
 from osgeo import gdal
 from mpl_toolkits.basemap import Basemap
 from matplotlib.colors import LinearSegmentedColormap
+
+
 
 def fpu_data_to_raster(fpu_ids,fpu_raster,data):
 # Disaggregate tabulated data into raster.
@@ -158,7 +161,7 @@ def visualize_ensemble_raster(crop,osc,raster_data,raster_mask,savepath,save,col
     if colorbar_name not in os.listdir(savepath):
         # add colorbar
         plt.figure()
-        cs = m.imshow(raster_data[60:,:]*100,clim=clim,cmap=cmap)
+        cs = plt.imshow(raster_data[60:,:]*100,clim=clim,cmap=cmap)
         plt.gca().set_visible(False)
         cbar = plt.colorbar(cs, extend = 'both',orientation='horizontal')
         cbar.set_label('Difference in sensitivity magnitude', fontsize=12)
@@ -181,12 +184,12 @@ def difference_files_to_visualize(alpha,model,aggregation,setup1,setup2,crop_lis
 # Loop through all the file names and check, that the input parameters match
 # for the scanerios being compared. Then append the file name to import it later.
             for file1, file2 in zip(file_list1,file_list2):
-                if model[0] in file1 and aggregation[0] in file1 and setup1 in file1 and crop in file1 and osc in file1 and climate[0] in file1 and file1.endswith('.csv'):
+                if model[0] in file1 and aggregation[0] in file1 and setup1 in file1 and crop in file1 and osc in file1 and climate[0] in file1 and file1.endswith('.csv') and 'may_sowing' in file1 and 'nino34' not in file1:
                     file_save1.append(file1)
-                if model[0] in file2 and aggregation[0] in file2 and setup2 in file2 and crop in file2 and osc in file2 and climate[0] in file2 and file2.endswith('.csv'):
+                if model[0] in file2 and aggregation[0] in file2 and setup2 in file2 and crop in file2 and osc in file2 and climate[0] in file2 and file2.endswith('.csv') and 'may_sowing' in file1 and 'nino34' not in file1:
                     file_save2.append(file2)
-            print file_save1
-            print file_save2
+            print(file_save1)
+            print(file_save2)
 # Import the data specified in the file_save variables in raster format.
             rast_difference, mirca_data = obtain_raster_data_difference(input_path1,input_path2,aggregation,alpha,file_save1,file_save2)
 # Visualize the raster using the specified parameters
@@ -202,35 +205,35 @@ def difference_files_to_visualize(alpha,model,aggregation,setup1,setup2,crop_lis
 aggregation_list = ['573']
 climate_list = ['AgMERRA']
 crop_list = ['mai','ric','soy','whe']
-oscillation_list = ['enso_djf_adj','iod_son_adj','nao_djf_adj']
+oscillation_list = ['enso_multiv','iod_multiv','nao_multiv']
 alpha = 0.1
 save = 1
 
 model_list_main = ['all_models']
-input_path1 = r'D:\work\research\crops_and_oscillations\results_v8\combined_fullharm\sensitivity'
-input_path2 = r'D:\work\research\crops_and_oscillations\results_v8\firr_fullharm\sensitivity'
-savepath = r'D:\work\research\crops_and_oscillations\results_v8\combined_fullharm\sens_difference'
+input_path1 = r'D:\work\research\crops_and_oscillations\results_review_v1\combined_fullharm\sensitivity'
+input_path2 = r'D:\work\research\crops_and_oscillations\results_review_v1\firr_fullharm\sensitivity'
+savepath = r'D:\work\research\crops_and_oscillations\results_review_v1\combined_fullharm\sens_difference'
 difference_files_to_visualize(alpha,model_list_main,aggregation_list,'combined','firr',crop_list,oscillation_list,climate_list,input_path1,input_path2,savepath,save,'fullharm_combined_firr')
 
-input_path1 = r'D:\work\research\crops_and_oscillations\results_v8\combined_fullharm\sensitivity'
-input_path2 = r'D:\work\research\crops_and_oscillations\results_v8\noirr_fullharm\sensitivity'
-savepath = r'D:\work\research\crops_and_oscillations\results_v8\combined_fullharm\sens_difference'
+input_path1 = r'D:\work\research\crops_and_oscillations\results_review_v1\combined_fullharm\sensitivity'
+input_path2 = r'D:\work\research\crops_and_oscillations\results_review_v1\noirr_fullharm\sensitivity'
+savepath = r'D:\work\research\crops_and_oscillations\results_review_v1\combined_fullharm\sens_difference'
 difference_files_to_visualize(alpha,model_list_main,aggregation_list,'combined','noirr',crop_list,oscillation_list,climate_list,input_path1,input_path2,savepath,save,'fullharm_combined_noirr')
 
-input_path1 = r'D:\work\research\crops_and_oscillations\results_v8\firr_fullharm\sensitivity'
-input_path2 = r'D:\work\research\crops_and_oscillations\results_v8\noirr_fullharm\sensitivity'
-savepath = r'D:\work\research\crops_and_oscillations\results_v8\combined_fullharm\sens_difference'
+input_path1 = r'D:\work\research\crops_and_oscillations\results_review_v1\firr_fullharm\sensitivity'
+input_path2 = r'D:\work\research\crops_and_oscillations\results_review_v1\noirr_fullharm\sensitivity'
+savepath = r'D:\work\research\crops_and_oscillations\results_review_v1\combined_fullharm\sens_difference'
 difference_files_to_visualize(alpha,model_list_main,aggregation_list,'firr','noirr',crop_list,oscillation_list,climate_list,input_path1,input_path2,savepath,save,'fullharm_firr_noirr')
 
 model_list_main = ['all_fertilizer_models']
-input_path1 = r'D:\work\research\crops_and_oscillations\results_v8\combined_fullharm\sensitivity'
-input_path2 = r'D:\work\research\crops_and_oscillations\results_v8\combined_harmnon\sensitivity'
-savepath = r'D:\work\research\crops_and_oscillations\results_v8\combined_fullharm\sens_difference'
+input_path1 = r'D:\work\research\crops_and_oscillations\results_review_v1\combined_fullharm\sensitivity'
+input_path2 = r'D:\work\research\crops_and_oscillations\results_review_v1\combined_harmnon\sensitivity'
+savepath = r'D:\work\research\crops_and_oscillations\results_review_v1\combined_fullharm\sens_difference'
 difference_files_to_visualize(alpha,model_list_main,aggregation_list,'combined_actfert','combined_fullfert',crop_list,oscillation_list,climate_list,input_path1,input_path2,savepath,save,'fullharm_combined_harmnon_combined')
 
-input_path1 = r'D:\work\research\crops_and_oscillations\results_v8\combined_fullharm\sensitivity'
-input_path2 = r'D:\work\research\crops_and_oscillations\results_v8\firr_harmnon\sensitivity'
-savepath = r'D:\work\research\crops_and_oscillations\results_v8\combined_fullharm\sens_difference'
+input_path1 = r'D:\work\research\crops_and_oscillations\results_review_v1\combined_fullharm\sensitivity'
+input_path2 = r'D:\work\research\crops_and_oscillations\results_review_v1\firr_harmnon\sensitivity'
+savepath = r'D:\work\research\crops_and_oscillations\results_review_v1\combined_fullharm\sens_difference'
 difference_files_to_visualize(alpha,model_list_main,aggregation_list,'combined_actfert','firr_fullfert',crop_list,oscillation_list,climate_list,input_path1,input_path2,savepath,save,'fullharm_combined_harmnon_firr')
 
 

@@ -1,11 +1,15 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
+
 import os
 import numpy as np
 import matplotlib.pyplot as plt
 from osgeo import gdal
-from mpl_toolkits.basemap import Basemap
 from matplotlib.colors import LinearSegmentedColormap
+os.environ['PROJ_LIB'] = r'C:\Users\heinom2\AppData\Local\conda\conda\pkgs\proj4-4.9.3-hfa6e2cd_8\Library\share'
+from mpl_toolkits.basemap import Basemap
+
+
 
 def fpu_data_to_raster(fpu_ids,fpu_raster,data):
 # Disaggregate tabulated data into raster.
@@ -63,7 +67,11 @@ def obtain_raster_data(file_name, path, aggregation):
     if aggregation == '573':
         ids = data[:,0]
         sens = data[:,1]
-        pval = data[:,2]   
+        if 'rsquared' in file_name:
+            pval = np.zeros(sens.shape)
+        else:
+            pval = data[:,2]
+            
         rast_sens = fpu_data_to_raster(ids,'raster_fpu_573.tif',sens)
         rast_pval = fpu_data_to_raster(ids,'raster_fpu_573.tif',pval)
         
@@ -126,65 +134,85 @@ def extract_raster_sensitivity(alpha,file_name,aggregation,input_path,savepath,s
     ax.set_axis_off()
     fig.add_axes(ax)
 
-
+    if 'rsquared' not in file_name:
 # Create the colorscale, using RGB information and the function LinearSegmentedColormap    
-    cdict = {'blue':  ((0.0, 0.0, 0.0),
-                   (0.25, 0.0, 0.0),
-                   (0.49, 0.8, 0.9),
-                   (0.51, 0.9, 1.0),
-                   (0.75, 1.0, 1.0),
-                   (1.0, 0.4, 1.0)),
-
-         'green': ((0.0, 0.0, 0.0),
-                   (0.25, 0.0, 0.0),
-                   (0.49, 0.9, 0.9),
-                   (0.51, 0.9, 0.9),
-                   (0.75, 0.0, 0.0),
-                   (1.0, 0.0, 0.0)),
-
-         'red':  ((0.0, 0.0, 0.4),
-                   (0.25, 1.0, 1.0),
-                   (0.49, 1.0, 0.9),
-                   (0.51, 0.9, 0.8),
-                   (0.75, 0.0, 0.0),
-                   (1.0, 0.0, 0.0))
-            }   
-    cmap = LinearSegmentedColormap('cmap', cdict)
-    clim = (-5,5)
+        cdict = {'blue':  ((0.0, 0.0, 0.0),
+                       (0.25, 0.0, 0.0),
+                       (0.49, 0.8, 0.9),
+                       (0.51, 0.9, 1.0),
+                       (0.75, 1.0, 1.0),
+                       (1.0, 0.4, 1.0)),
+    
+             'green': ((0.0, 0.0, 0.0),
+                       (0.25, 0.0, 0.0),
+                       (0.49, 0.9, 0.9),
+                       (0.51, 0.9, 0.9),
+                       (0.75, 0.0, 0.0),
+                       (1.0, 0.0, 0.0)),
+    
+             'red':  ((0.0, 0.0, 0.4),
+                       (0.25, 1.0, 1.0),
+                       (0.49, 1.0, 0.9),
+                       (0.51, 0.9, 0.8),
+                       (0.75, 0.0, 0.0),
+                       (1.0, 0.0, 0.0))
+                }   
+        cmap = LinearSegmentedColormap('cmap', cdict)
+        cbarmin, cbarmax = -10,10
+        clim = (cbarmin,cbarmax)
+        
+    elif 'rsquared' in file_name:
+        cbarmin, cbarmax = 0,25
+        cmap = 'Greens'
+        clim = (cbarmin, cbarmax)
+        
 # Modify settings for the raster visualization
     rast_sens = np.flipud(rast_sens)
     rast_ha_bol = np.flipud(rast_ha_bol)
     crop_index = rast_ha_bol * np.isnan(rast_sens)
     rast_sens[crop_index] = 0
 
-    cs = m.imshow(rast_sens[60:,:]*100,clim=clim,cmap=cmap)
-        
+    m.imshow(rast_sens[60:,:]*100,clim=clim,cmap=cmap)    
     m.drawcoastlines(linewidth=0.25)
     m.fillcontinents(color='white',lake_color='white',zorder = 0)
     m.drawmapboundary(fill_color='White')
     
-#    title, model_title = create_title(file_name)
-#    plt.title(title, loc='left',fontsize=20)
-#    plt.title(model_title, loc='left',fontsize=20)
+    if 'all_models' not in file_name and 'all_fertilizer_models' not in file_name:
+        title, model_title = create_title(file_name)
+        plt.title(title, loc='left',fontsize=20)
+        plt.title(model_title, loc='left',fontsize=20)
 
 # Save the figure
+    file_name = file_name.replace('jmasst_','')
+        
     if save == 1:
         os.chdir(savepath)
         plt.savefig(file_name.replace('.csv','.png'), dpi=300, bbox_inches='tight')
     plt.show(m)
+    print(file_name)
 
 # If colorbar for sensitivity doesn't exist in folder, create it.
-    if 'colorbar_sens.png' not in os.listdir(savepath):
+    if 'colorbar_sens.png' not in os.listdir(savepath) or 'colobar_rsquared.png' not in os.listdir(savepath) :
         plt.figure()
-        cs = m.imshow(rast_sens[60:,:]*100,clim=clim,cmap=cmap)
+        img = plt.imshow(rast_sens[60:,:]*100,clim=clim,cmap=cmap)
         plt.gca().set_visible(False)
-        cbar = plt.colorbar(cs, extend = 'both',orientation='horizontal')
-        cbar.set_label('Crop yield deviation (%) per standard deviation index change', fontsize=12)
-        plt.savefig('colorbar_sens.png', dpi = 300, bbox_inches='tight')
-#        
+
+
+        if 'rsquared' in file_name:
+            cbar = plt.colorbar(img, extend = 'both',orientation='horizontal', ticks = np.arange(int(cbarmin), int(cbarmax+5), int(5)))
+            cbar.set_label('% of yield variability explained by the oscillations', fontsize=12)
+            plt.savefig('colobar_rsquared.png', dpi = 300, bbox_inches='tight')   
+            cbar.ax.set_xticklabels(np.arange(int(cbarmin), int(cbarmax+5), int(5)))
+            
+        else:
+            cbar = plt.colorbar(img, extend = 'both',orientation='horizontal', ticks = np.arange(int(cbarmin), int(cbarmax+2), int(2)))
+            cbar.set_label('Crop yield deviation (%) per standard deviation index change', fontsize=12)
+            plt.savefig('colorbar_sens.png', dpi = 300, bbox_inches='tight')
+            cbar.ax.set_xticklabels(np.arange(int(cbarmin), int(cbarmax+2), int(2)))
+        plt.show()
     
 
-def sens_files_to_visualize(alpha,model_list,aggregation_list,irrig_setup_list,crop_list,oscillation_list,climate_list,input_path,savepath,save):
+def sens_files_to_visualize(alpha,model_list,aggregation_list,irrig_setup_list,crop_list,oscillation_list,climate_list,growing_season,input_path,savepath,save):
     
     file_list = os.listdir(input_path)
 # Loop throught the paramters and selects the file that is going to be visualized.
@@ -195,7 +223,7 @@ def sens_files_to_visualize(alpha,model_list,aggregation_list,irrig_setup_list,c
                     for crop in crop_list:
                         for osc in oscillation_list:
                             for file in file_list:
-                                if model in file and aggregation in file and irrig in file and crop in file and osc in file and climate in file and file.endswith('.csv'):
+                                if model in file and aggregation in file and irrig in file and crop in file and osc in file and climate in file and growing_season in file and file.endswith('.csv'):
                                     extract_raster_sensitivity(alpha,file,aggregation,input_path,savepath,save)
 
 
@@ -270,15 +298,15 @@ def write_output_table(output_table,aggregation,climate_input,irrig,model,alpha,
     output_table = np.vstack((column_header,output_table))
     output_table = np.hstack((row_header,output_table))
     
-    print output_table
-    print 'sensitivity_aggregated_table_'+model+'_'+aggregation+'_'+irrig+'_'+climate_input+'_'+'_alpha_'+str(alpha)+'.csv'
+    print(output_table)
+    print('sensitivity_aggregated_table_'+model+'_'+aggregation+'_'+irrig+'_'+climate_input+'_'+'_alpha_'+str(alpha)+'.csv')
     
     os.chdir(savepath)
     
     np.savetxt('sensitivity_aggregated_table_'+model+'_'+aggregation+'_'+irrig+'_'+climate_input+'_'+'_alpha_'+str(alpha)+'.csv', output_table, delimiter=";",fmt="%s")
 
 
-def sens_files_to_aggregate_table(alpha,model_list,aggregation_list,irrig_setup_list,crop_list,oscillation_list,input_path,savepath,climate_input):
+def sens_files_to_aggregate_table(alpha,model_list,aggregation_list,irrig_setup_list,crop_list,oscillation_list,input_path,savepath,climate_input, growing_season):
     
     file_list = os.listdir(input_path)
 # Loop throught the paramters and select the file that is going to be visualized.
@@ -290,8 +318,8 @@ def sens_files_to_aggregate_table(alpha,model_list,aggregation_list,irrig_setup_
                 for file in file_list:
                     for crop in crop_list:
                         for osc in oscillation_list:
-                            if aggregation in file and irrig in file and crop in file and osc in file and model in file and climate_input in file:
-                                print file
+                            if aggregation in file and irrig in file and crop in file and osc in file and model in file and climate_input in file and growing_season in file and 'nino34' not in file:
+                                print(file)
 # Calculate how much harvested areas have significant sensitivity.
                                 total_neg, total_pos, prop_neg, prop_pos = extract_aggregated_sensitivity(file,input_path,aggregation,alpha)
 # Check where to put the values in the table.
@@ -310,64 +338,73 @@ aggregation_list = ['573']
 irrig_setup_list = ['combined']
 climate_list = ['AgMERRA']
 crop_list = ['mai','whe','ric','soy']
-oscillation_list = ['enso_djf_adj','iod_son_adj','nao_djf_adj']#,'enso_mam','enso_jja','enso_son','enso_djf_plus','max_enso','iod_djf_reg','iod_mam','iod_jja','iod_son','iod_djf_plus','max_iod','nao_djf_reg','nao_mam','nao_jja','nao_son','nao_djf_plus','max_nao']
+oscillation_list = ['enso_multiv','iod_multiv','nao_multiv', 'rsquared']
+
 alpha = 0.1
 save = 1
 
-model_list_main = ['all_models','all_fertilizer_models','pdssat','epic-boku','epic-iiasa','gepic','papsim','pegasus',\
-             'lpj-guess','lpjml','cgms-wofost','epic-tamu','orchidee-crop','pepic']
-input_path = r'D:\work\research\crops_and_oscillations\results_v8\combined_fullharm\sensitivity'
-savepath = r'D:\work\research\crops_and_oscillations\results_v8\combined_fullharm\sensitivity_figs'
-sens_files_to_visualize(alpha,model_list_main,aggregation_list,irrig_setup_list,crop_list,oscillation_list,climate_list,input_path,savepath,save)
+model_list_main = ['all_models','all_fertilizer_models']
+input_path = r'D:\work\research\crops_and_oscillations\results_review_v1\combined_fullharm\sensitivity'
+savepath = r'D:\work\research\crops_and_oscillations\results_review_v1\combined_fullharm\sensitivity_figs_multiv'
+sens_files_to_visualize(alpha,model_list_main,aggregation_list,irrig_setup_list,crop_list,oscillation_list,climate_list,'may_sowing',input_path,savepath,save)
 
+oscillation_list = ['enso_multiv','iod_multiv','nao_multiv']
+model_list_main = ['pdssat','epic-boku','epic-iiasa','gepic','papsim','pegasus',\
+             'lpj-guess','lpjml','cgms-wofost','epic-tamu','orchidee-crop','pepic']
+input_path = r'D:\work\research\crops_and_oscillations\results_review_v1\combined_fullharm\sensitivity'
+savepath = r'D:\work\research\crops_and_oscillations\results_review_v1\combined_fullharm\sensitivity_figs_models'
+sens_files_to_visualize(alpha,model_list_main,aggregation_list,irrig_setup_list,crop_list,oscillation_list,climate_list,'may_sowing',input_path,savepath,save)
+
+
+oscillation_list = ['enso_multiv','iod_multiv','nao_multiv']
 model_list_main = ['all_models']
 climate_input = 'AgMERRA'
-input_path = r'D:\work\research\crops_and_oscillations\results_v8\combined_fullharm\sensitivity'
-savepath = r'D:\work\research\crops_and_oscillations\results_v8\combined_fullharm\sensitivity_table'
-sens_files_to_aggregate_table(alpha,model_list_main,aggregation_list,irrig_setup_list,crop_list,oscillation_list,input_path,savepath,climate_input)
+input_path = r'D:\work\research\crops_and_oscillations\results_review_v1\combined_fullharm\sensitivity'
+savepath = r'D:\work\research\crops_and_oscillations\results_review_v1\combined_fullharm\sensitivity_table'
+sens_files_to_aggregate_table(alpha,model_list_main,aggregation_list,irrig_setup_list,crop_list,oscillation_list,input_path,savepath,climate_input,'may_sowing')
 
 model_list_main = ['all_models']
 climate_list = ['Princeton']
-input_path = r'D:\work\research\crops_and_oscillations\results_v8\combined_fullharm\sensitivity'
-savepath = r'D:\work\research\crops_and_oscillations\results_v8\combined_fullharm\sensitivity_figs'
-sens_files_to_visualize(alpha,model_list_main,aggregation_list,irrig_setup_list,crop_list,oscillation_list,climate_list,input_path,savepath,save)
+input_path = r'D:\work\research\crops_and_oscillations\results_review_v1\combined_fullharm\sensitivity'
+savepath = r'D:\work\research\crops_and_oscillations\results_review_v1\combined_fullharm\sensitivity_figs'
+sens_files_to_visualize(alpha,model_list_main,aggregation_list,irrig_setup_list,crop_list,oscillation_list,climate_list,'may_sowing',input_path,savepath,save)
 
 model_list_main = ['all_models']
 climate_list = ['AgMERRA']
-input_path = r'D:\work\research\crops_and_oscillations\results_v8\combined_default\sensitivity'
-savepath = r'D:\work\research\crops_and_oscillations\results_v8\combined_default\sensitivity_figs'
-sens_files_to_visualize(alpha,model_list_main,aggregation_list,irrig_setup_list,crop_list,oscillation_list,climate_list,input_path,savepath,save)
+input_path = r'D:\work\research\crops_and_oscillations\results_review_v1\combined_default\sensitivity'
+savepath = r'D:\work\research\crops_and_oscillations\results_review_v1\combined_default\sensitivity_figs'
+sens_files_to_visualize(alpha,model_list_main,aggregation_list,irrig_setup_list,crop_list,oscillation_list,climate_list,'may_sowing',input_path,savepath,save)
 
 model_list_main = ['all_models']
 irrig_setup_list = ['firr']
-input_path = r'D:\work\research\crops_and_oscillations\results_v8\firr_fullharm\sensitivity'
-savepath = r'D:\work\research\crops_and_oscillations\results_v8\firr_fullharm\sensitivity_figs'
-sens_files_to_visualize(alpha,model_list_main,aggregation_list,irrig_setup_list,crop_list,oscillation_list,climate_list,input_path,savepath,save)
+input_path = r'D:\work\research\crops_and_oscillations\results_review_v1\firr_fullharm\sensitivity'
+savepath = r'D:\work\research\crops_and_oscillations\results_review_v1\firr_fullharm\sensitivity_figs'
+sens_files_to_visualize(alpha,model_list_main,aggregation_list,irrig_setup_list,crop_list,oscillation_list,climate_list,'may_sowing',input_path,savepath,save)
 
 model_list_main = ['all_models']
 irrig_setup_list = ['noirr']
-input_path = r'D:\work\research\crops_and_oscillations\results_v8\noirr_fullharm\sensitivity'
-savepath = r'D:\work\research\crops_and_oscillations\results_v8\noirr_fullharm\sensitivity_figs'
-sens_files_to_visualize(alpha,model_list_main,aggregation_list,irrig_setup_list,crop_list,oscillation_list,climate_list,input_path,savepath,save)
+input_path = r'D:\work\research\crops_and_oscillations\results_review_v1\noirr_fullharm\sensitivity'
+savepath = r'D:\work\research\crops_and_oscillations\results_review_v1\noirr_fullharm\sensitivity_figs'
+sens_files_to_visualize(alpha,model_list_main,aggregation_list,irrig_setup_list,crop_list,oscillation_list,climate_list,'may_sowing',input_path,savepath,save)
 
 model_list_main = ['all_fertilizer_models']
 irrig_setup_list = ['firr']
-input_path = r'D:\work\research\crops_and_oscillations\results_v8\firr_harmnon\sensitivity'
-savepath = r'D:\work\research\crops_and_oscillations\results_v8\firr_harmnon\sensitivity_figs'
-sens_files_to_visualize(alpha,model_list_main,aggregation_list,irrig_setup_list,crop_list,oscillation_list,climate_list,input_path,savepath,save)
+input_path = r'D:\work\research\crops_and_oscillations\results_review_v1\firr_harmnon\sensitivity'
+savepath = r'D:\work\research\crops_and_oscillations\results_review_v1\firr_harmnon\sensitivity_figs'
+sens_files_to_visualize(alpha,model_list_main,aggregation_list,irrig_setup_list,crop_list,oscillation_list,climate_list,'may_sowing',input_path,savepath,save)
 
 model_list_main = ['all_fertilizer_models']
 irrig_setup_list = ['combined']
-input_path = r'D:\work\research\crops_and_oscillations\results_v8\combined_harmnon\sensitivity'
-savepath = r'D:\work\research\crops_and_oscillations\results_v8\combined_harmnon\sensitivity_figs'
-sens_files_to_visualize(alpha,model_list_main,aggregation_list,irrig_setup_list,crop_list,oscillation_list,climate_list,input_path,savepath,save)
+input_path = r'D:\work\research\crops_and_oscillations\results_review_v1\combined_harmnon\sensitivity'
+savepath = r'D:\work\research\crops_and_oscillations\results_review_v1\combined_harmnon\sensitivity_figs'
+sens_files_to_visualize(alpha,model_list_main,aggregation_list,irrig_setup_list,crop_list,oscillation_list,climate_list,'may_sowing',input_path,savepath,save)
 
 model_list_main = ['all_models']
 irrig_setup_list = ['combined']
 oscillation_list = ['growing_season_enso','growing_season_iod','growing_season_nao']
-input_path = r'D:\work\research\crops_and_oscillations\results_v8\combined_fullharm\sensitivity_gs_figs'
-savepath = r'D:\work\research\crops_and_oscillations\results_v8\combined_fullharm\sensitivity_gs_figs'
-sens_files_to_visualize(alpha,model_list_main,aggregation_list,irrig_setup_list,crop_list,oscillation_list,climate_list,input_path,savepath,save)
+input_path = r'D:\work\research\crops_and_oscillations\results_review_v1\combined_fullharm\sensitivity_gs_figs'
+savepath = r'D:\work\research\crops_and_oscillations\results_review_v1\combined_fullharm\sensitivity_gs_figs'
+sens_files_to_visualize(alpha,model_list_main,aggregation_list,irrig_setup_list,crop_list,oscillation_list,climate_list,'growing_season',input_path,savepath,save)
 
 
 

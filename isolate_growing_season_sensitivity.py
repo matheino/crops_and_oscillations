@@ -18,10 +18,10 @@ def isolate_growing_season_sensitivity(alpha,model_list,aggregation_list,irrig_s
                             for season in season_list:
                                 for file in file_list:
 # Loop through the list of files and select the files that include the information specified by the different parameters
-                                    if model in file and aggregation in file and irrig in file and crop in file and osc in file and climate in file and file.endswith('.csv') and \
+                                    if 'sensitivity' in file and model in file and aggregation in file and irrig in file and crop in file and osc in file and climate in file and file.endswith('.csv') and \
                                     season in file and temporal_aggreg in file:
 # Import the data specified by the file variable
-                                        print file
+                                        print(file)
                                         os.chdir(input_path)
                                         data = np.genfromtxt(file,delimiter = ';')
 # Create tables that include the sensitivity and related p-value information.
@@ -66,10 +66,10 @@ def isolate_growing_season_sensitivity(alpha,model_list,aggregation_list,irrig_s
                                 sens_stack = np.hstack((ids[:,np.newaxis],sens_gs,pval_gs))
                                 gs_stack = np.hstack((ids[:,np.newaxis],gs_info,pval_gs))
                                                         
-                            os.chdir(savepath)
                             np.savetxt('sensitivity_growing_season_'+osc+'_'+crop+'_'+irrig+'_'+runtype[0]+'_'+model+'_'+climate+'_GGCM_'+aggregation+'.csv',sens_stack, delimiter=";")
                             np.savetxt('sensitivity_gs_seasons_'+osc+'_'+crop+'_'+irrig+'_'+runtype[0]+'_'+model+'_'+climate+'_GGCM_'+aggregation+'.csv',gs_stack, delimiter=";") 
-                            print ' '
+                            print(' ')
+                            os.chdir(savepath)
 
 
 model_list_main = ['all_models']
@@ -78,13 +78,13 @@ aggregation_list = ['573']
 irrig_setup_list = ['combined']
 climate_list = ['AgMERRA']
 crop_list = ['mai','ric','soy','whe']
-oscillation_list = ['enso','iod','nao']
+oscillation_list = ['enso_multiv','iod_multiv','nao_multiv']
 runtype_list = ['fullharm']
-temporal_aggreg = 'annual_aggreg'
+temporal_aggreg = 'annual_harvest'
 alpha = 0.1
 save = 1
-input_path = r'D:\work\research\crops_and_oscillations\results_v8\combined_fullharm\sensitivity'
-savepath = r'D:\work\research\crops_and_oscillations\results_v8\combined_fullharm\sensitivity_gs_figs'
+input_path = r'D:\work\research\crops_and_oscillations\results_review_v1\combined_fullharm\sensitivity'
+savepath = r'D:\work\research\crops_and_oscillations\results_review_v1\combined_fullharm\sensitivity_gs_figs'
 
 isolate_growing_season_sensitivity(alpha,model_list_main,aggregation_list,irrig_setup_list,crop_list,oscillation_list,climate_list,season_list,runtype_list,temporal_aggreg,input_path,savepath,save)
 

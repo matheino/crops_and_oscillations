@@ -29,7 +29,7 @@ def import_file_lists_AgMIPcsv(input_prod,input_area,aggreg_type):
 # List of different model configurations.
     runtypes = ['default','fullharm','harmnon'] # model setup
 # List of the harvest year set-ups included
-    aggreg_season_types = ['september_aggreg','december_aggreg','annual_aggreg']
+    aggreg_season_types = ['annual_harvest','may_sowing']
 # 
     filenames_area = import_file_list(input_area,'.csv')
     filenames_prod = import_file_list(input_prod,'.csv')
@@ -72,8 +72,8 @@ def combine_AgMIPggcm_yields(input_prod,input_area,output_yield,aggreg_type):
     listings_file_firr_area, listings_file_noirr_area, listings_file_firr_prod, listings_file_noirr_prod = import_file_lists_AgMIPcsv(input_prod,input_area,aggreg_type)
 
 # Check that the file lists are of same length.
-    print len(listings_file_firr_area)
-    print len(listings_file_noirr_area)
+    print(len(listings_file_firr_area))
+    print(len(listings_file_noirr_area))
     
 # Loops through the file lists exported with the function import_file_lists_AgMIPcsv()
     for firr_area, noirr_area, firr_prod, noirr_prod in zip(listings_file_firr_area, listings_file_noirr_area, listings_file_firr_prod, listings_file_noirr_prod):
@@ -117,14 +117,14 @@ def combine_AgMIPggcm_yields(input_prod,input_area,output_yield,aggreg_type):
             os.chdir(output_yield)
             np.savetxt(yield_combined_filename,yield_combined, delimiter=";")
         else:
-            print 'no match'
+            print('no match')
 
 
 # Paths to where production and harvested areas (input) data are stored.
-input_path_production = r'D:\work\data\modified_crop_data\_GGCM_actual_cropland_final\prod'
-input_path_area = 'D:\work\data\modified_crop_data\_GGCM_actual_cropland_final\ha'
+input_path_production = r'D:\work\data\modified_crop_data\__GGCM_actual_cropland_review1_final\prod'
+input_path_area = 'D:\work\data\modified_crop_data\__GGCM_actual_cropland_review1_final\ha'
 # Path to where yield (output) data are stored.
-output_path_combined_yield = 'D:\work\data\modified_crop_data\_GGCM_actual_cropland_final\yield'
+output_path_combined_yield = 'D:\work\data\modified_crop_data\__GGCM_actual_cropland_review1_final\yield'
 # Data aggregated to 573 FPUs.
 aggreg_type = ['573']
 combine_AgMIPggcm_yields(input_path_production,input_path_area,output_path_combined_yield,aggreg_type)

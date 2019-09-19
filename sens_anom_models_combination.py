@@ -109,7 +109,7 @@ def visualize_raster(crop,osc,raster_data,raster_mask,savepath,save,cmap,clim,co
     if colorbar_name not in os.listdir(savepath):
         # add colorbar
         plt.figure()
-        cs = m.imshow(raster_data[60:,:],clim=clim,cmap=cmap)
+        cs = plt.imshow(raster_data[60:,:],clim=clim,cmap=cmap)
         plt.gca().set_visible(False)
         cbar = plt.colorbar(cs, extend = 'both',orientation='horizontal')
         cbar.set_label(cbar_label, fontsize=12)
@@ -122,35 +122,37 @@ aggreg = '573'
 irrig= 'combined' # ['noirr','combined']
 climate = 'AgMERRA'
 crop_list = ['mai','ric','soy','whe']
-oscillation_list = ['enso_djf_adj','iod_son_adj','nao_djf_adj']
+oscillation_list_anom = ['enso_djf_adj','iod_son_adj','nao_djf_adj']
+oscillation_list_sens = ['enso_multiv','iod_multiv','nao_multiv']
 alpha = 0.1
-savepath = r'D:\work\research\crops_and_oscillations\results_v8\combined_fullharm\anom_sens_agreement_figs'
+savepath = r'D:\work\research\crops_and_oscillations\results_review_v1\combined_fullharm\anom_sens_agreement_figs'
 
 
 # Loop through all oscillations and crops
 for crop in crop_list:
-    for oscillation in oscillation_list:
+    for oscillation_sens, oscillation_anom in zip(oscillation_list_sens,oscillation_list_anom):
 # Import information about the how well the individual models agree with the ensemble sensitivity result
-        os.chdir(r'D:\work\research\crops_and_oscillations\results_v8\combined_fullharm\min_max_median_agreement')
-        model_comp = np.genfromtxt('sensitivity_agreement_'+oscillation+'_'+crop+'.csv',delimiter = ';')
+        os.chdir(r'D:\work\research\crops_and_oscillations\results_review_v1\combined_fullharm\min_max_median_agreement')
+        model_comp = np.genfromtxt('sensitivity_agreement_'+oscillation_sens+'_'+crop+'.csv',delimiter = ';')
 
 # Import information about the average anomalies during strong, positive and negative, oscillation phases.
-        files_anoms = os.listdir(r'D:\work\research\crops_and_oscillations\results_v8\combined_fullharm\anomalies')
-        os.chdir(r'D:\work\research\crops_and_oscillations\results_v8\combined_fullharm\anomalies')
+        files_anoms = os.listdir(r'D:\work\research\crops_and_oscillations\results_review_v1\combined_fullharm\anomalies')
+        os.chdir(r'D:\work\research\crops_and_oscillations\results_review_v1\combined_fullharm\anomalies')
         for file in files_anoms:
-            if crop in file and model in file and aggreg in file and irrig in file and climate in file and oscillation in file and crop in file and file.endswith('.csv'):
+            if crop in file and model in file and aggreg in file and irrig in file and climate in file and oscillation_anom in file and crop in file and 'nino34' not in file and file.endswith('.csv'):
                 if 'pos' in file:
                     anom_pos = np.genfromtxt(file,delimiter = ';')
                 elif 'neg' in file:
                     anom_neg = np.genfromtxt(file,delimiter = ';')
+                    print(file)
 
 # Import information about sensitivity information.
-        files_sens = os.listdir(r'D:\work\research\crops_and_oscillations\results_v8\combined_fullharm\sensitivity')
-        os.chdir(r'D:\work\research\crops_and_oscillations\results_v8\combined_fullharm\sensitivity')
+        files_sens = os.listdir(r'D:\work\research\crops_and_oscillations\results_review_v1\combined_fullharm\sensitivity')
+        os.chdir(r'D:\work\research\crops_and_oscillations\results_review_v1\combined_fullharm\sensitivity')
         for file in files_sens:
-            if crop in file and model in file and aggreg in file and irrig in file and climate in file and oscillation in file and crop in file and file.endswith('.csv'):
+            if crop in file and model in file and aggreg in file and irrig in file and climate in file and oscillation_sens in file and crop in file and 'nino34' not in file and 'may_sowing' in file and 'multiv' in file and file.endswith('.csv'):
                 sens = np.genfromtxt(file,delimiter = ';')
-
+                print(file)
 # Set anomalies and sensitivity (1st index) to zero in FPUs where they're not significant
 # (p-value > alpha; 2nd index). Also, set anomalies to zero in areas, where sensitivity is insiginificant.
 # ids include information about the FPUs.
@@ -168,9 +170,9 @@ for crop in crop_list:
         sens = sens[:,1] 
         
 # Initialize arrays for checking if anomaly and sensitivity results agree within each FPU.
-        anom_sens_agr_1 = np.zeros(sens.shape[0])
-        anom_sens_agr_2 = np.zeros(sens.shape[0])
-        anom_sens_agr_3 = np.zeros(sens.shape[0])
+        anom_sens_agr_1 = np.zeros(sens.shape[0]).astype(bool)
+        anom_sens_agr_2 = np.zeros(sens.shape[0]).astype(bool)
+        anom_sens_agr_3 = np.zeros(sens.shape[0]).astype(bool)
 # Loop through all the FPUs
         for i in range(0,sens.shape[0]):
 # Set dummy variable number 3 as 1, if both negative and positive phase give a result that is consistent with
@@ -187,7 +189,7 @@ for crop in crop_list:
                 anom_sens_agr_3[i] = 0
 # Set dummy variable number 3 as 1, if neither negative or positive phase give a result that is consistent with
 # the sensitivity result
-            elif (sens[i] > 0 and anom_pos[i] < 0 and anom_neg[i] > 0) or (sens[i] <= 0 and anom_pos[i] >= 0 and anom_neg[i] <= 0):
+            elif (sens[i] > 0 and anom_pos[i] <= 0 and anom_neg[i] >= 0) or (sens[i] < 0 and anom_pos[i] >= 0 and anom_neg[i] <= 0):
                 anom_sens_agr_1[i] = 1
                 anom_sens_agr_2[i] = 0
                 anom_sens_agr_3[i] = 0
@@ -226,5 +228,5 @@ for crop in crop_list:
 # Create a boolean array about where the crop is grown
         mirca_mask = mirca_mask > 0
 # Visualize the raster based on the parameters given.
-        visualize_raster(crop,oscillation,aggreg_results_raster,mirca_mask,savepath,1,'sens_anom_models_combined',(0,9),'aggreg_cbar','aggreg_results',crop+oscillation)
+        visualize_raster(crop,oscillation_sens,aggreg_results_raster,mirca_mask,savepath,1,'sens_anom_models_combined',(0,9),'aggreg_cbar','aggreg_results',crop+oscillation_sens)
         

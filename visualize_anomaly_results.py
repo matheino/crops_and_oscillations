@@ -1,11 +1,14 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*- import pylab
 import os
+os.environ['PROJ_LIB'] = r'C:\Users\heinom2\AppData\Local\conda\conda\pkgs\proj4-4.9.3-hfa6e2cd_8\Library\share'
 import numpy as np
 import matplotlib.pyplot as plt
 from osgeo import gdal
 from mpl_toolkits.basemap import Basemap
 from matplotlib.colors import LinearSegmentedColormap
+
+
 
 def fpu_data_to_raster(fpu_ids,fpu_raster,data):
 # Disaggregate tabulated data into raster.
@@ -157,18 +160,19 @@ def extract_raster_anomalies(alpha,file_name,aggregation,input_path,savepath,sav
             }
     
     cmap = LinearSegmentedColormap('cmap', cdict)
-    clim = (-5,5)
+    cbarmin, cbarmax = -10,10
+    clim = (cbarmin,cbarmax)
 # Modify settings for the raster visualization
     
     rast_anom = np.flipud(rast_anom)
     rast_ha_bol = np.flipud(rast_ha_bol)
     crop_index = rast_ha_bol * np.isnan(rast_anom)
     rast_anom[crop_index] = 0
-    cs = m.imshow(rast_anom[60:,:]*100,clim=clim,cmap=cmap)
-        
+    
+    
+    m.imshow(rast_anom[60:,:]*100,clim=clim,cmap=cmap)  
     m.drawcoastlines(linewidth=0.25)
     m.fillcontinents(color='white',lake_color='white',zorder = 0)
-    
     m.drawmapboundary(fill_color='White')
     
 #    title = create_title(file_name)
@@ -179,15 +183,25 @@ def extract_raster_anomalies(alpha,file_name,aggregation,input_path,savepath,sav
         os.chdir(savepath)
         plt.savefig(file_name.replace('.csv','.png'), dpi=300, bbox_inches='tight')
     plt.show(m)
+    
+    print(file_name)
 # If colorbar for anomalies doesn't exist in folder, create it.
     if 'colorbar_anom.png' not in os.listdir(savepath):
         plt.figure()
-        cs = m.imshow(rast_anom[60:,:]*100,clim=clim,cmap=cmap)
+        img = plt.imshow(rast_anom[60:,:]*100,clim=clim,cmap=cmap)
         plt.gca().set_visible(False)
-        cbar = plt.colorbar(cs, extend = 'both',orientation='horizontal')
+        cbar = plt.colorbar(img, extend = 'both',orientation='horizontal', ticks = np.arange(int(cbarmin), int(cbarmax+2), int(2)))
         cbar.set_label('Median crop yield deviation (%) during strong oscillation phases', fontsize=12)
+        cbar.ax.set_xticklabels(np.arange(int(cbarmin), int(cbarmax+2), int(2)))
         plt.savefig('colorbar_anom.png', dpi = 300, bbox_inches='tight')
-#        
+        plt.show()
+
+    
+    
+        
+    
+    
+    
     
 
 def anom_files_to_visualize(alpha,model_list,aggregation_list,irrig_setup_list,crop_list,oscillation_list,climate_list, input_path,savepath,save):
@@ -264,8 +278,8 @@ def write_output_table(output_table,aggregation,model,irrig,alpha,savepath):
     output_table = np.vstack((column_header,output_table))
     output_table = np.hstack((row_header,output_table))
     
-    print output_table
-    print 'aggregated_table_'+aggregation+'_'+irrig+'.csv'
+    print(output_table)
+    print('aggregated_table_'+aggregation+'_'+irrig+'.csv')
     
     os.chdir(savepath)
     
@@ -285,7 +299,7 @@ def anom_files_to_aggregate_table(alpha,model_list,aggregation_list,irrig_setup_
                         for crop in crop_list:
                             for osc in oscillation_list:
                                 if aggregation in file and irrig in file and crop in file and osc in file and model in file and climate in file:
-                                    print file
+                                    print(file)
 # Calculate how much harvested areas have a significant anomaly during the oscillation phase.
                                     total_ha_impacted, total_ha_impacted_prop = extract_aggregated_anomalies(file,input_path,aggregation,alpha)
 # Check where to put the values in the table.
@@ -304,8 +318,8 @@ oscillation_list = ['enso_djf_adj','iod_son_adj','nao_djf_adj']
 climate_list = ['AgMERRA']
 alpha = 0.1
 save = 1
-input_path = r'D:\work\research\crops_and_oscillations\results_v8\combined_fullharm\anomalies'
-savepath = r'D:\work\research\crops_and_oscillations\results_v8\combined_fullharm\anomalies_figs'
+input_path = r'D:\work\research\crops_and_oscillations\results_review_v1\combined_fullharm\anomalies'
+savepath = r'D:\work\research\crops_and_oscillations\results_review_v1\combined_fullharm\anomalies_figs'  
 anom_files_to_visualize(alpha,model_list_main,aggregation_list,irrig_setup_list,crop_list,oscillation_list,climate_list,input_path,savepath,save)
 
 
@@ -319,8 +333,8 @@ oscillation_list = ['enso_djf_adj','iod_son_adj','nao_djf_adj']
 climate_list = ['AgMERRA']
 alpha = 0.1
 save = 1
-input_path = r'D:\work\research\crops_and_oscillations\results_v8\combined_fullharm\anomalies'
-savepath = r'D:\work\research\crops_and_oscillations\results_v8\combined_fullharm\anomalies_table'   
+input_path = r'D:\work\research\crops_and_oscillations\results_review_v1\combined_fullharm\anomalies'
+savepath = r'D:\work\research\crops_and_oscillations\results_review_v1\combined_fullharm\anomalies_table'  
              
 anom_files_to_aggregate_table(alpha,model_list_main,aggregation_list,irrig_setup_list,crop_list,oscillation_list,climate_list,input_path,savepath)
 

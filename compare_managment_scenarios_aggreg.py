@@ -9,7 +9,7 @@ def obtain_data(file_name, path, alpha):
     os.chdir(path)
 
     data = np.genfromtxt(file_name,delimiter = ';') 
-    
+#    print(data)
     sens = data[:,1]
     pval = data[:,2]
 #    sens[pval > alpha] = np.nan
@@ -29,7 +29,7 @@ def create_label(crop,pval,val):
     else:
         pval_string = ''
 
-    label = 'Avg: '+str(round(val,1))+'%'+pval_string
+    label = 'Avg: '+str(int(round(val,0)))+' %'+pval_string
 
     return label
 
@@ -78,8 +78,8 @@ def plot_histograms_comparison(alpha,model_list,aggregation_list,crop_list,oscil
 # Loop through all the file names and check, that the input parameters match
 # for the scanerios being compared.
                         for file1, file2 in zip(file_list1,file_list2):
-                            if aggregation in file1 and crop in file1 and osc in file1 and model in file1 and climate in file1 and setup1 in file1:
-                                print file1
+                            if aggregation in file1 and crop in file1 and osc in file1 and model in file1 and climate in file1 and setup1 in file1 and 'may_sowing' in file1 and 'rsquared' not in file1 and 'nino34' not in file1:
+                                print(file1)
                                 sens, pval = obtain_data(file1,input_path_setup1,alpha)
 # Save the sensitivity results for all the oscillations into sens1 and sens2 variables,
 # and the corresponding p-values to the pval1 and pval2 variables.
@@ -92,8 +92,8 @@ def plot_histograms_comparison(alpha,model_list,aggregation_list,crop_list,oscil
                                     pval1 = np.hstack((pval1,pval))
 
                                                                     
-                            if aggregation in file2 and crop in file2 and osc in file2 and model in file2 and climate in file2 and setup2 in file2:
-                                print file2
+                            if aggregation in file2 and crop in file2 and osc in file2 and model in file2 and climate in file2 and setup2 in file2 and 'may_sowing' in file2 and 'rsquared' not in file2 and 'nino34' not in file2:
+                                print(file2)
                                 sens, pval = obtain_data(file2,input_path_setup2,alpha)
                                 if j == 0:
                                     sens2 = sens
@@ -148,23 +148,22 @@ def plot_histograms_comparison(alpha,model_list,aggregation_list,crop_list,oscil
                     plt.yticks(np.arange(0.1,0.32,0.1))
                     ax.tick_params(axis='both', labelsize = 17)
                     
-                    print pval_diff
+                    print(pval_diff)
 # Set legend information.
-                    if crop == 'whe' and setup2 == 'noirr':
-                        ax.set_xlabel('Difference in yield deviation (%)\nper unit index change',fontsize = 17)
-                        ax.set_ylabel('Frequency',fontsize = 17)
+#                    if crop == 'whe' and setup2 == 'noirr':
+#                        ax.set_xlabel('Difference in yield deviation (%)\nper unit index change',fontsize = 17)
+#                        ax.set_ylabel('Frequency',fontsize = 17)
                     
                     if crop != 'whe':
                         ax.axes.xaxis.set_ticklabels([])
                         
-                    if setup2 != 'noirr':
+                    if setup2 != 'noirr_actfert':
                         ax.axes.yaxis.set_ticklabels([])
 # Save figure.
                     os.chdir(savepath)
 #                    print crop
                     fig_name = 'histogram_'+crop+'_'+setup1+'_vs_'+setup2+'.png'
-                    plt.savefig(fig_name, dpi=300, bbox_inches='tight')
-#                    plt.title(title, loc = 'center',fontsize=20)
+                    plt.savefig(fig_name, dpi=300, bbox_inches='tight', transparent = True)
                     plt.show()
                     
 
@@ -172,38 +171,39 @@ def plot_histograms_comparison(alpha,model_list,aggregation_list,crop_list,oscil
 climate_list = ['AgMERRA']
 aggregation_list = ['573']
 crop_list = ['mai','ric','soy','whe']
-oscillation_list = ['enso_djf_adj','iod_son_adj','nao_djf_adj']
+oscillation_list = ['multiv']
+
 alpha = 0.1
 save = 1
-savepath = r'D:\work\research\crops_and_oscillations\results_v8\scenario_comparisons' 
+savepath = r'D:\work\research\crops_and_oscillations\results_review_v1\scenario_comparisons_figs' 
 
 model_list_main = ['all_models']
 # combined vs noirr
-input_path1 = r'D:\work\research\crops_and_oscillations\results_v8\combined_fullharm\sensitivity'
-input_path2 = r'D:\work\research\crops_and_oscillations\results_v8\noirr_fullharm\sensitivity'            
+input_path1 = r'D:\work\research\crops_and_oscillations\results_review_v1\combined_fullharm\sensitivity'
+input_path2 = r'D:\work\research\crops_and_oscillations\results_review_v1\noirr_fullharm\sensitivity'            
 plot_histograms_comparison(alpha,model_list_main,aggregation_list,crop_list,oscillation_list,climate_list,'combined','noirr',input_path1,input_path2,savepath,149)          
 
 # combined vs firr
-input_path1 = r'D:\work\research\crops_and_oscillations\results_v8\combined_fullharm\sensitivity'
-input_path2 = r'D:\work\research\crops_and_oscillations\results_v8\firr_fullharm\sensitivity'
+input_path1 = r'D:\work\research\crops_and_oscillations\results_review_v1\combined_fullharm\sensitivity'
+input_path2 = r'D:\work\research\crops_and_oscillations\results_review_v1\firr_fullharm\sensitivity'
 plot_histograms_comparison(alpha,model_list_main,aggregation_list,crop_list,oscillation_list,climate_list,'combined','firr',input_path1,input_path2,savepath,74)          
 
 
 model_list_main = ['all_fertilizer_models']
 # combined: actual vs. unlimited fertilizers
-input_path1 = r'D:\work\research\crops_and_oscillations\results_v8\combined_fullharm\sensitivity'
-input_path2 = r'D:\work\research\crops_and_oscillations\results_v8\combined_harmnon\sensitivity'
+input_path1 = r'D:\work\research\crops_and_oscillations\results_review_v1\combined_fullharm\sensitivity'
+input_path2 = r'D:\work\research\crops_and_oscillations\results_review_v1\combined_harmnon\sensitivity'
 plot_histograms_comparison(alpha,model_list_main,aggregation_list,crop_list,oscillation_list,climate_list,'actfert','fullfert',input_path1,input_path2,savepath,34)          
 
 # combined, actual vs unlimited irrigation+fertilizers
-input_path1 = r'D:\work\research\crops_and_oscillations\results_v8\combined_fullharm\sensitivity'
-input_path2 = r'D:\work\research\crops_and_oscillations\results_v8\firr_harmnon\sensitivity'
+input_path1 = r'D:\work\research\crops_and_oscillations\results_review_v1\combined_fullharm\sensitivity'
+input_path2 = r'D:\work\research\crops_and_oscillations\results_review_v1\firr_harmnon\sensitivity'
 plot_histograms_comparison(alpha,model_list_main,aggregation_list,crop_list,oscillation_list,climate_list,'combined_actfert','firr_fullfert',input_path1,input_path2,savepath,74)          
 
 model_list_main = ['all_models']
 # combined : rainfed vs full irrigation
-input_path1 = r'D:\work\research\crops_and_oscillations\results_v8\firr_fullharm\sensitivity'
-input_path2 = r'D:\work\research\crops_and_oscillations\results_v8\noirr_fullharm\sensitivity'
-plot_histograms_comparison(alpha,model_list_main,aggregation_list,crop_list,oscillation_list,climate_list,'firr_actfert','noirr_actfert',input_path1,input_path2,savepath,249)          
+input_path1 = r'D:\work\research\crops_and_oscillations\results_review_v1\firr_fullharm\sensitivity'
+input_path2 = r'D:\work\research\crops_and_oscillations\results_review_v1\noirr_fullharm\sensitivity'
+plot_histograms_comparison(alpha,model_list_main,aggregation_list,crop_list,oscillation_list,climate_list,'firr_actfert','noirr_actfert',input_path1,input_path2,savepath,299)          
 
 

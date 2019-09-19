@@ -216,37 +216,111 @@ def import_harvest_shift_info(file_name,season):
 # Initialize gs_shift_cell as same shape array as harvest and planting data data
     gs_shift_cell = np.zeros((gs_plant.shape)).astype(bool)
 
-# If temporal aggregation is into annual calendar year values ('annual_aggreg'), see where
+# If temporal aggregation is into annual calendar year values ('annual_harvest'), see where
 # planting DOY is larger than harvest DOY (growing season goes over boreal winter).
 # If aggregation is into seasonal aggregations (e.g. 'september_aggreg'), change
 # strange data values from -999 to 999 as it's more convenient later in the script.
-    if season == 'annual_aggreg':
+    if season == 'annual_harvest':
         gs_shift_cell[gs_plant > gs_harvest] = True
     else:
-        gs_harvest[gs_harvest == -999] = 999  
+        gs_harvest[gs_harvest == -999] = 999
+        gs_plant[gs_plant == -999] = 999
 
 # Array of the number of days for each month
     days_per_month = np.array((31,28,31,30,31,30,31,31,30,31,30,31))
     
 # If temporal aggregation is conducted so that the crops are harvested annually
 # based on a specific month, e.g. starting from september and going to the end
-# of august in 'september_aggreg', see where the harvest is conducted prior to the first
-# data of the aggregation time span. Only 'december_aggreg' and 'september_aggreg'
-# are used in the study in question.
-    if season == 'december_aggreg':
+# of august in 'september_aggreg', find where the harvest is conducted prior to the first
+# data of the aggregation time span.
+    if season == 'december_harvest':
         gs_shift_cell[gs_harvest <= np.sum(days_per_month[:11])] = True
-    elif season == 'march_aggreg':    
+    elif season == 'march_harvest':    
         gs_shift_cell[gs_harvest <= np.sum(days_per_month[:2])] = True
-    elif season == 'june_aggreg':
+    elif season == 'june_harvest':
         gs_shift_cell[gs_harvest <= np.sum(days_per_month[:5])] = True
-    elif season == 'september_aggreg':
+    elif season == 'september_harvest':
         gs_shift_cell[gs_harvest <= np.sum(days_per_month[:8])] = True
     
 #    plt.imshow(gs_shift_cell)
 #    plt.colorbar()
 #    plt.show()
-        
+    
+# If temporal aggregation is conducted so that the crops are sown annually
+# based on a specific month, e.g. starting from may and going to the end
+# of april in as in 'may_sowing', find where the harvest is conducted prior to the first
+# data of the aggregation time span. Only 'may_sowing'
+# is used in the study in question.
+    if season == 'may_sowing':
+        gs_shift_cell[gs_plant <= np.sum(days_per_month[:4])] = True
+    elif season == 'june_sowing':
+        gs_shift_cell[gs_plant <= np.sum(days_per_month[:5])] = True
+    elif season == 'september_sowing':  
+        gs_shift_cell[gs_plant <= np.sum(days_per_month[:8])] = True
+    elif season == 'december_sowing':  
+        gs_shift_cell[gs_plant <= np.sum(days_per_month[:11])] = True
+    
     return gs_shift_cell
+
+        
+def shift_yield_data(data_yield, file_name, season):
+    
+    
+    if season == 'sowing_annual':
+        return data_yield
+
+# Shift data by one year in areas where sowing is conducted starting from a specific date,
+# e.g. may.
+    elif 'sowing' in season:
+        shift_data_seasonal = import_harvest_shift_info(file_name,season)
+        data_yield_updated = np.zeros(data_yield.shape)*np.nan
+        
+        for k in range(0,data_yield.shape[2]-1):
+            yield_temp_t0 = np.copy(data_yield[:,:,k])
+            yield_temp_t1 = np.copy(data_yield[:,:,k+1])
+            
+            yield_temp_t0[shift_data_seasonal] = yield_temp_t1[shift_data_seasonal]
+            data_yield_updated[:,:,k] = yield_temp_t0
+    
+        data_yield = data_yield_updated
+
+    else:
+# Shift data by one year in areas where harvest date is smaller than planting data (as DOY), so that
+# harvests in different areas have the same calendar years. This is done because initially, in GGCMI, the first 
+# layer of the data cube shows the yield for the first harvest in each cell. As the first harvest might occur
+# in the second year of the simulation (i.e. for crops that grow through winter), the harvests are shifter
+# so that they match in terms of calendar years for each raster layer.        
+        shift_data_annual = import_harvest_shift_info(file_name,'annual_harvest')
+        
+        data_yield_updated = np.zeros(data_yield.shape)*np.nan
+        for k in range(0,data_yield.shape[2]-1):
+            yield_temp_t0 = np.copy(data_yield[:,:,k])
+            yield_temp_t1 = np.copy(data_yield[:,:,k+1])
+            
+            yield_temp_t1[shift_data_annual] = yield_temp_t0[shift_data_annual]
+            data_yield_updated[:,:,k+1] = yield_temp_t1
+            
+        data_yield = data_yield_updated
+
+        
+# If harvests are temporally aggregated starting from a specific month
+# i.e. september or december for this study.
+        if season != 'annual_harvest':
+            shift_data_seasonal = import_harvest_shift_info(file_name,season)
+            data_yield_updated = np.zeros(data_yield.shape)*np.nan
+            for k in range(0,data_yield.shape[2]-1):
+                yield_temp_t0 = np.copy(data_yield[:,:,k])
+                yield_temp_t1 = np.copy(data_yield[:,:,k+1])
+                
+                yield_temp_t0[shift_data_seasonal] = yield_temp_t1[shift_data_seasonal]
+                data_yield_updated[:,:,k] = yield_temp_t0
+    
+            data_yield = data_yield_updated
+    
+    return data_yield
+
+
+
 
 def import_AgMIP_GGCM_data_matched_growing_season_optional_cropland_and_seasonal_aggregation(cropland,season,output_path):
     
@@ -270,8 +344,8 @@ def import_AgMIP_GGCM_data_matched_growing_season_optional_cropland_and_seasonal
 # loop through each file in listings_file (& listings path)
     for i in range(0,len(listings_path)):
 
-        print r'AgMIP '+crop_list[i]+' '+str(i)
-        print listings_file[i]
+        print(r'AgMIP '+crop_list[i]+' '+str(i))
+        print(listings_file[i])
 
 # Check whether file already exists in folder. If file already exists, goes directly to the next item in the loop.
         file_existance = check_file_existance('fpu_573_area_'+crop_list[i]+'_'+climate_list[i]+'_'+irrig_list[i]+'_'+ggcm_list[i]+'_'+runtype_list[i]+'_'+season+'.csv',output_path+'\ha')   
@@ -287,37 +361,8 @@ def import_AgMIP_GGCM_data_matched_growing_season_optional_cropland_and_seasonal
 # fill empty matrix values into nan
         data_yield = ma.filled(data_yield,np.nan)
 
-# Shift data by one year in areas where harvest date is smaller than planting data (as DOY), so that
-# harvests in different areas have the same calendar years. This is done because initially, in GGCMI, the first 
-# layer of the data cube shows the yield for the first harvest in each cell. As the first harvest might occur
-# in the second year of the simulation (i.e. for crops that grow through winter), the harvests are shifter
-# so that they match in terms of calendar years for each raster layer.
-        shift_data_annual = import_harvest_shift_info(listings_file[i],'annual_aggreg')
-        
-        data_yield_updated = np.zeros(data_yield.shape)*np.nan
-        for k in range(0,data_yield.shape[2]-1):
-            yield_temp_t0 = np.copy(data_yield[:,:,k])
-            yield_temp_t1 = np.copy(data_yield[:,:,k+1])
-            
-            yield_temp_t1[shift_data_annual] = yield_temp_t0[shift_data_annual]
-            data_yield_updated[:,:,k+1] = yield_temp_t1
-            
-        data_yield = data_yield_updated
+        data_yield = shift_yield_data(data_yield, listings_file[i], season)
 
-        
-# If harvests are temporally aggregated starting from a specific month
-# i.e. september or december for this study.
-        if season != 'annual':
-            shift_data_seasonal = import_harvest_shift_info(listings_file[i],season)
-            data_yield_updated = np.zeros(data_yield.shape)*np.nan
-            for k in range(0,data_yield.shape[2]-1):
-                yield_temp_t0 = np.copy(data_yield[:,:,k])
-                yield_temp_t1 = np.copy(data_yield[:,:,k+1])
-                
-                yield_temp_t0[shift_data_seasonal] = yield_temp_t1[shift_data_seasonal]
-                data_yield_updated[:,:,k] = yield_temp_t0
-    
-            data_yield = data_yield_updated      
 
 # See which crop is in question; crop_list[i] corresponds to the crop in listings_path[i],
 # and retreive the correct harvested areas array.
@@ -363,14 +408,12 @@ def import_AgMIP_GGCM_data_matched_growing_season_optional_cropland_and_seasonal
 
 
 # Run the codes with different configurations        
-output_path = r'D:\work\data\modified_crop_data\_GGCM_actual_cropland_final'
-import_AgMIP_GGCM_data_matched_growing_season_optional_cropland_and_seasonal_aggregation('actual_cropland','december_aggreg',output_path)
-import_AgMIP_GGCM_data_matched_growing_season_optional_cropland_and_seasonal_aggregation('actual_cropland','september_aggreg',output_path)   
-import_AgMIP_GGCM_data_matched_growing_season_optional_cropland_and_seasonal_aggregation('actual_cropland','annual_aggreg',output_path)   
+output_path = r'D:\work\data\modified_crop_data\__GGCM_actual_cropland_review1_final'
+import_AgMIP_GGCM_data_matched_growing_season_optional_cropland_and_seasonal_aggregation('actual_cropland','may_sowing',output_path)
+import_AgMIP_GGCM_data_matched_growing_season_optional_cropland_and_seasonal_aggregation('actual_cropland','annual_harvest',output_path)   
 
-output_path = r'D:\work\data\modified_crop_data\_GGCM_full_cropland_final'
-import_AgMIP_GGCM_data_matched_growing_season_optional_cropland_and_seasonal_aggregation('full_cropland','december_aggreg',output_path)
-import_AgMIP_GGCM_data_matched_growing_season_optional_cropland_and_seasonal_aggregation('full_cropland','september_aggreg',output_path)   
+output_path = r'D:\work\data\modified_crop_data\__GGCM_full_cropland_review1_final'
+import_AgMIP_GGCM_data_matched_growing_season_optional_cropland_and_seasonal_aggregation('full_cropland','may_sowing',output_path)
 
 
 

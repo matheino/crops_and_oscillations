@@ -27,7 +27,7 @@ def import_file_lists(path, irrig_setup, model_list,runtype,aggregation,crop,cli
         runtype_temp.append('harmnon')
     elif 'harmnon' in runtype_temp:
         runtype_temp.append('harmnon')
-        
+    
 # Loop though the different model parameters to create file lists for data to be imported later in the script.
     filenames = []
     for file in os.listdir(path):
@@ -38,7 +38,7 @@ def import_file_lists(path, irrig_setup, model_list,runtype,aggregation,crop,cli
                 aggregation[0] in file and crop[0] in file and climate[0] in file and aggreg_season in file:
                     filenames.append(file)
     
-    print filenames
+    print(filenames)
     
 # Export list of filenames, where all files that have the required configurations are included.
     return filenames
@@ -87,7 +87,6 @@ def detrend_data(filename,path):
 def import_oscillation_index(oscillation_index,climate_input,aggreg_season):
 # Imports each oscillation index (ENSO, IOD, NAO).
     os.chdir('D:\work\data\oscillation_indices')
-        
 # Imports the raw oscillation index data based on the oscillation in question
 # defined by oscillation_index.
     if 'enso' in oscillation_index[0]:
@@ -106,30 +105,19 @@ def import_oscillation_index(oscillation_index,climate_input,aggreg_season):
         years_to_select = np.all([osc_raw[:,0] >= 1948, osc_raw[:,0] <= 2008],axis = 0)
         osc_raw = osc_raw[years_to_select,:]
 
+# Remove strong El Niño years of 1982 and 1997 from IOD data.
+#    if 'iod' in oscillation_index[0]:
+#        years_to_select_iod = np.all([osc_raw[:,0] != 1982, osc_raw[:,0] != 1997],axis = 0)
+#        osc_raw = osc_raw[years_to_select_iod,:]
+        
 # Calculate the seasonal average of the index based on the parameters specified
 # as the inputs of the function, i.e. aggreg_season and oscillation_index.
-    if aggreg_season == 'december_aggreg' and 'djf_adj' in oscillation_index[0]:
+    if aggreg_season == 'may_sowing' and 'djf_adj' in oscillation_index[0]:
         osc_raw_months = np.vstack((osc_raw[2:-2,12],osc_raw[3:-1,1],osc_raw[3:-1,2])).T
         osc_idx = np.mean(osc_raw_months,axis = 1)
-    elif aggreg_season == 'september_aggreg' and 'son_adj' in oscillation_index[0]:
+    elif aggreg_season == 'may_sowing' and 'son_adj' in oscillation_index[0]:
         osc_raw_months = osc_raw[2:-2,[9,10,11]]
-        osc_idx = np.mean(osc_raw_months,axis = 1)
-    elif aggreg_season == 'annual_aggreg':
-        if 'djf_reg' in oscillation_index[0]:
-            osc_raw_months = np.vstack((osc_raw[1:-3,12],osc_raw[2:-2,1],osc_raw[2:-2,2])).T
-            osc_idx = np.mean(osc_raw_months,axis = 1)
-        elif 'mam' in oscillation_index[0]:
-            osc_raw_months = osc_raw[2:-2,[3,4,5]]
-            osc_idx = np.mean(osc_raw_months,axis = 1)
-        elif 'jja' in oscillation_index[0]:
-            osc_raw_months = osc_raw[2:-2,[6,7,8]]
-            osc_idx = np.mean(osc_raw_months,axis = 1)
-        elif 'son' in oscillation_index[0]:
-            osc_raw_months = osc_raw[2:-2,[9,10,11]]
-            osc_idx = np.mean(osc_raw_months,axis = 1)
-        elif 'djf_plus' in oscillation_index[0]:
-            osc_raw_months = np.vstack((osc_raw[2:-2,12],osc_raw[3:-1,1],osc_raw[3:-1,2])).T
-            osc_idx = np.mean(osc_raw_months,axis = 1)
+        osc_idx = np.mean(osc_raw_months,axis = 1)        
 
 # Standardize the oscillation index.  
     osc_idx_standardized = (osc_idx - np.mean(osc_idx)) / np.std(osc_idx)
@@ -141,9 +129,8 @@ def import_oscillation_index(oscillation_index,climate_input,aggreg_season):
     pos_yrs = osc_idx_standardized[osc_idx_standardized[:,1] > np.percentile(osc_idx_standardized[:,1],75),0]
     neg_yrs = osc_idx_standardized[osc_idx_standardized[:,1] < np.percentile(osc_idx_standardized[:,1],25),0]
     osc_yrs = np.vstack((pos_yrs,neg_yrs))
-    
+        
     return osc_yrs
-
 
 def bootstrap_difftest(data,N):
 # Initialize a matrix with sampled values for each fpu/raster cell, N is bootstrap sample size
@@ -173,12 +160,11 @@ def bootstrap_difftest(data,N):
 def isolate_osc_anomalies_GGCM(model_list,runtype,irrig_setup,crop,aggregation,oscillation_type,climate_input,aggreg_season, input_path,savepath):
 
     osc_yrs = import_oscillation_index(oscillation_type, climate_input, aggreg_season)    
-    
 # Change directory where crop yield data is imported from based on the irrigation setup:
     if irrig_setup[0] == 'combined':
-        input_path = os.path.join(input_path, r'_GGCM_actual_cropland_final\yield')
+        input_path = os.path.join(input_path, r'__GGCM_actual_cropland_review1_final\yield')
     else:
-        input_path = os.path.join(input_path, r'_GGCM_full_cropland_final\yield') 
+        input_path = os.path.join(input_path, r'__GGCM_full_cropland_review1_final\yield') 
     
     
 # import list of files with yield information specified by parameters
@@ -209,6 +195,7 @@ def isolate_osc_anomalies_GGCM(model_list,runtype,irrig_setup,crop,aggregation,o
         else:
             pos_yrs_temp = osc_yrs[0,osc_yrs[0,:] <= 2005] - 1950
             neg_yrs_temp = osc_yrs[1,osc_yrs[1,:] <= 2005] - 1950
+        
         
         pos_anom_new = detrended_data[:,pos_yrs_temp.astype(int)]
         neg_anom_new = detrended_data[:,neg_yrs_temp.astype(int)]
@@ -272,39 +259,30 @@ def isolate_anomalies_GGCM_main(model_list_main, runtype_list_main, aggregation_
 # GGCM
 aggregation_list_main = [['573']]
 irrig_setup_list_main = [['combined']]
-crop_list_main = [['whe'],['mai'],['ric'],['soy']] # ['ric','whe','soy','mai']
+crop_list_main = [['whe'],['mai'],['ric'],['soy']]
 climate_list_main = [['AgMERRA']]
 input_path = r'D:\work\data\modified_crop_data'
-savepath = r'D:\work\research\crops_and_oscillations\results_v8'
+savepath = r'D:\work\research\crops_and_oscillations\results_review_v1'
+
 
 runtype_list_main = [['fullharm']]
 model_list_main = [['all_models']]
-aggreg_season = 'december_aggreg'
-oscillation_list_main = [['enso_djf_adj'],['nao_djf_adj']]
-isolate_anomalies_GGCM_main(model_list_main, runtype_list_main, aggregation_list_main, irrig_setup_list_main,crop_list_main, climate_list_main, oscillation_list_main, aggreg_season, input_path, savepath)
-aggreg_season = 'september_aggreg'
-oscillation_list_main = [['iod_son_adj']]
+aggreg_season = 'may_sowing'
+oscillation_list_main = [['enso_djf_adj'],['nao_djf_adj'],['iod_son_adj']]
 isolate_anomalies_GGCM_main(model_list_main, runtype_list_main, aggregation_list_main, irrig_setup_list_main,crop_list_main, climate_list_main, oscillation_list_main, aggreg_season, input_path, savepath)
 
 
 model_list_main = [['all_fertilizer_models']]
 runtype_list_main = [['fullharm']]
-aggreg_season = 'december_aggreg'
-oscillation_list_main = [['enso_djf_adj'],['nao_djf_adj']]
+aggreg_season = 'may_sowing'
+oscillation_list_main = [['enso_djf_adj'],['nao_djf_adj'],['iod_son_adj']]
 isolate_anomalies_GGCM_main(model_list_main, runtype_list_main, aggregation_list_main, irrig_setup_list_main,crop_list_main, climate_list_main, oscillation_list_main, aggreg_season, input_path, savepath)
-aggreg_season = 'september_aggreg'
-oscillation_list_main = [['iod_son_adj']]
-isolate_anomalies_GGCM_main(model_list_main, runtype_list_main, aggregation_list_main, irrig_setup_list_main,crop_list_main, climate_list_main, oscillation_list_main, aggreg_season, input_path, savepath)
+
 
 runtype_list_main = [['harmnon']]
-aggreg_season = 'december_aggreg'
-oscillation_list_main = [['enso_djf_adj'],['nao_djf_adj']]
+aggreg_season = 'may_sowing'
+oscillation_list_main = [['enso_djf_adj'],['nao_djf_adj'],['iod_son_adj']]
 isolate_anomalies_GGCM_main(model_list_main, runtype_list_main, aggregation_list_main, irrig_setup_list_main,crop_list_main, climate_list_main, oscillation_list_main, aggreg_season, input_path, savepath)
-aggreg_season = 'september_aggreg'
-oscillation_list_main = [['iod_son_adj']]
-isolate_anomalies_GGCM_main(model_list_main, runtype_list_main, aggregation_list_main, irrig_setup_list_main,crop_list_main, climate_list_main, oscillation_list_main, aggreg_season, input_path, savepath)
-
-
 
 
 

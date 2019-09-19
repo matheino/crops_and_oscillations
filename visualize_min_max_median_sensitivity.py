@@ -102,9 +102,9 @@ def obtain_raster_data_ensemble(file_list, path, aggregation,oscillation_list,cr
     for osc_type in oscillation_list:
         for crop in crop_list:
             if crop in file_list[0] and osc_type in file_list[0]:
-                print crop
-                print osc_type
-                print file_list[0]
+                print(crop)
+                print(osc_type)
+                print(file_list[0])
                 os.chdir(savepath)
                 np.savetxt('sensitivity_agreement_'+osc_type+'_'+crop+'.csv',sens_ensemble_sign_tot_txt, delimiter=";")
     
@@ -237,7 +237,7 @@ def visualize_ensemble_raster(crop,osc,raster_data,raster_mask,savepath,save,cma
     if colorbar_name not in os.listdir(savepath):
         # add colorbar
         plt.figure()
-        cs = m.imshow(raster_data[60:,:]*100,clim=clim,cmap=cmap)
+        cs = plt.imshow(raster_data[60:,:]*100,clim=clim,cmap=cmap)
         plt.gca().set_visible(False)
         cbar = plt.colorbar(cs, extend = 'both',orientation='horizontal')
         cbar.set_label(cbar_label, fontsize=12)
@@ -260,7 +260,7 @@ def ensemble_files_to_visualize(alpha,model_list,aggregation_list,irrig_setup_li
                     for aggregation in aggregation_list:
                         for irrig in irrig_setup_list:
                             for file in file_list_temp:
-                                if model in file and aggregation in file and irrig in file and crop in file and osc in file and climate in file and file.endswith('.csv'):
+                                if model in file and aggregation in file and irrig in file and crop in file and osc in file and climate in file and file.endswith('.csv') and 'annual_harvest' not in file:
                                     file_list.append(file)
 # Import raster data about the agreement of the individual models compared to the individual model results
 # as well as maximum, minimum and median results of the individual model results. Also, import
@@ -282,11 +282,11 @@ aggregation_list = ['573']
 irrig_setup_list = ['combined'] # ['noirr','combined']
 climate_list = ['AgMERRA']
 crop_list = ['mai','ric','soy','whe']
-oscillation_list = ['enso_djf_adj','iod_son_adj','nao_djf_adj']
+oscillation_list = ['enso_multiv','iod_multiv','nao_multiv']
 alpha = 0.1
 save = 1
-input_path = r'D:\work\research\crops_and_oscillations\results_v8\combined_fullharm\sensitivity'
-savepath = r'D:\work\research\crops_and_oscillations\results_v8\combined_fullharm\min_max_median_agreement'
+input_path = r'D:\work\research\crops_and_oscillations\results_review_v1\combined_fullharm\sensitivity'
+savepath = r'D:\work\research\crops_and_oscillations\results_review_v1\combined_fullharm\min_max_median_agreement'
 
 ensemble_files_to_visualize(alpha,model_list_main,aggregation_list,irrig_setup_list,crop_list,oscillation_list,climate_list,input_path,savepath,save)
 
