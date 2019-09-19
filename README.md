@@ -28,3 +28,13 @@ Each Python script file is stand alone. Brief descriptions of what the script fi
 - visualize_min_max_median_sensitivity.py: visualize the agreement of individual models to the ensemble results; also, looks into how the maximum, minimum and median sensitivity of the individual models; exports the plotted maps as a png file.
 
 - visualize_sensitivity_results.py: plots sensitivity results for different areas on a global map; exports the plotted maps as a png file.
+
+- isolate_temperature.py & isolate_soil_moisture.py: calculate average temperature and soil moisture conditions during the growing season; exports data as netcdf.
+
+- aggregate_climate_data.py: aggregates growing season temperature and weather data anomalies in rainfed and irrigated areas to FPU level; exports data as csv.
+
+- isolate_clim_corr.py: calculates the sensitivity of growing season temperature and soilmoisture anomalies to ENSO, IOD and NAO; exports the results as a csv file.
+
+- visualize_clim_corr.py: plots growing season temperature and soil moisture sensitivity results for different areas on a global map; exports the plotted maps as a png file.
+
+
